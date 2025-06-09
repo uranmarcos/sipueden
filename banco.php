@@ -59,13 +59,13 @@ $_SESSION["pedido"] = "biblioteca";
             <!-- ACCIONES -->
             <div class="row rowBotones d-flex justify-content-between">     
                 <div class="col-12 col-sm-6 col-md-4 px-0 mt-2 mt-md-0">
-                    <select class="form-control selectCategoria" @change="page= 1, getObjetos()" v-model="categoriaBusqueda">
+                    <select class="form-control selectCategoria" @change="selectCategoria()" v-model="categoriaBusqueda">
                         <option value="0" >Todas las categorias</option>
                         <option v-for="categoria in categorias" v-bind:value="categoria.id" >{{categoria.nombre}}</option>
                     </select>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-4 px-0 mt-2 mt-md-0" v-if="perfil != 'planificaciones' && perfil != 'videos'">
+                <div class="col-12 col-sm-6 col-md-4 px-0 mt-2 mt-md-0" v-if="perfil != 'planificaciones' && perfil != 'videos' && visualizacion">
                     <div class="row rowBuscador d-flex justify-content-center justify-content-md-end ">
                         <input class="form-control buscador" @keypress="changeBuscador(event)" :disabled="busquedaActiva" placeholder="Buscar" autocomplete="off" maxlength="60" id="buscador" v-model="buscador">
                         <button type="button" @click="buscarObjeto" class="mx-2 botonGeneral botonBuscar" v-if="buscador.trim().length >= 3">
@@ -83,6 +83,22 @@ $_SESSION["pedido"] = "biblioteca";
                 </div>
 
                 <div class="col-12 col-md-4 px-0 d-flex justify-content-end mt-2 mt-md-0" v-if="rol == 'admin' || rol == 'superAdmin'">
+                    <button 
+                        type="button" 
+                        class="btnVisualizacion" 
+                        @click="mostrarBloques()"
+                        v-if="!visualizacion && rol == 'superAdmin'"
+                    >
+                        VER BLOQUES
+                    </button>
+                    <button 
+                        type="button" 
+                        class="btnVisualizacion" 
+                        @click="mostrarListado()"
+                        v-if="visualizacion && rol == 'superAdmin'"
+                    >
+                        VER LISTADO
+                    </button>
                     <button type="button" class="botonGeneral" @click="irA('nuevo')" >
                         {{perfil == 'biblioteca' ? 'NUEVO LIBRO' : perfil == 'recursos' ? 'NUEVO RECURSO' : perfil == 'videos' ? 'NUEVO VIDEO' : 'NUEVA PLANIFICACIÓN' }}
                     </button>
@@ -92,7 +108,7 @@ $_SESSION["pedido"] = "biblioteca";
             <!-- ACCIONES -->
            
 
-            <div class="row mt-6">
+            <div class="row mt-6" v-if="visualizacion">
                 <div class="col-12">
                     <!-- START COMPONENTE LOADING BUSCANDO OBJETOS -->
                     <div class="contenedorLoading" v-if="buscandoObjetos">
@@ -371,6 +387,115 @@ $_SESSION["pedido"] = "biblioteca";
               
             </div>
 
+            <div class="row mt-6" v-if="!visualizacion">
+                <div class="col-12">
+                    <!-- START COMPONENTE LOADING BUSCANDO OBJETOS -->
+                    <div class="contenedorLoading" v-if="buscandoObjetos">
+                        <div class="loading">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END COMPONENTE LOADING BUSCANDO OBJETOS -->
+                
+                    <!-- START COMPONENTE OBJETOS DISPONIBLES / SIN RESULTADOS -->
+                    <div v-else>
+                        <!-- START COMPONENTE OBJETOS DISPONIBLES Y PAGINACION -->
+                        <div v-if="objetos.length != 0">
+                            <!-- START COMPONENTE OBJETOS DISPONIBLES -->
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr class="trHead">
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Categoria</th>
+                                        <th scope="col">Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <div>
+                                        <tr v-for="objeto in objetos">
+                                            <td>{{objeto.id}}</td>  
+                                            <td>{{objeto.nombre}}</td>
+                                            <td>{{objeto.categoria}}</td>
+                                            <td class="py-0">
+                                                <div class="popup-container">
+                                                    <button
+                                                        class="popup-label btn botonSmallEye"
+                                                        @click="togglePopup(objeto.id)"
+                                                    >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                        class="bi bi-eye" viewBox="0 0 16 16">
+                                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 
+                                                                5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 
+                                                                1 1.66-2.043C4.12 4.668 5.88 3.5 8 
+                                                                3.5c2.12 0 3.879 1.168 5.168 
+                                                                2.457A13.133 13.133 0 0 1 14.828 
+                                                                8c-.058.087-.122.183-.195.288-.335.48-.83 
+                                                                1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 
+                                                                12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 
+                                                                13.134 0 0 1 1.172 8z"/>
+                                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 
+                                                                5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 
+                                                                7 0 3.5 3.5 0 0 1-7 0z"/>
+                                                    </svg>
+                                                    </button>
+
+                                                    <div
+                                                    class="popup-box"
+                                                    v-if="popupAbiertoId === objeto.id"
+                                                    >
+                                                    {{ objeto.descripcion }}
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    </div>
+                                </tbody>
+                            </table>
+                            <!-- START PAGINACION -->
+                            <div class="row contenedorObjetos d-flex justify-content-around">
+                                <div class="row mt-3 mb-5 paginacion">
+                                    <div class="col-1 col-sm-4">
+                                        <button @click="prev" class="btnPaginacion pointer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left-fill" viewBox="0 0 16 16">
+                                                <path d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="col-9 col-sm-4 d-flex justify-content-center">
+                                        {{page * 50 - 49}} a {{page * 50 > cantidadObjetos ? cantidadObjetos : page * 50}} de {{cantidadObjetos == 1 ? "1 resultado" : cantidadObjetos >= 2 ? cantidadObjetos + " resultados" : ""}}
+                                    </div>
+                                    <div class="col-1 col-sm-4 d-flex justify-content-end">
+                                        <button  class="btnPaginacion pointer" @click="next">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                                                <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END PAGINACION -->
+                        </div>
+                        <!-- END COMPONENTE OBJETOS DISPONIBLES Y PAGINACION -->
+
+                        <!-- START COMPONENTE SIN RESULTADOS -->
+                        <div v-else>
+                            <div class="contenedorTabla" v-if="objetos.length == 0">
+                                <span class="sinResultados">
+                                    NO SE ENCONTRÓ RESULTADOS PARA MOSTRAR
+                                </span>
+                            </div>       
+                        </div>    
+                        <!-- END COMPONENTE SIN RESULTADOS -->
+                    </div>
+                    <!-- END COMPONENTE OBJETOS DISPONIBLES / SIN RESULTADOS -->
+                </div>
+            </div>
+
             <span class="ir-arriba" v-if="scroll" @click="irArriba">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
@@ -381,7 +506,25 @@ $_SESSION["pedido"] = "biblioteca";
         
     </div>
 
-    <style scoped> 
+    <style scoped>
+        .popup-container {
+            position: relative;
+            display: inline-block;
+        }
+        .popup-box {
+            position: absolute;
+            top: 100%;
+           
+            right: 0;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 100;
+            min-width: 200px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+
         .botonesAdmin{
             border-bottom: solid 1px grey;
             padding-bottom: 5px;
@@ -442,6 +585,21 @@ $_SESSION["pedido"] = "biblioteca";
             background: white;
         }
         .botonGeneral:hover{
+            background-color: rgb(124, 69, 153);
+            color: white;
+        }
+        .btnVisualizacion{
+            width: auto;
+            height: 34px;
+            padding: 0 10px;
+            font-size: 0.8em;
+            color: rgb(124, 69, 153);
+            border: solid 1px rgb(124, 69, 153);
+            border-radius: 5px;
+            background: white;
+            margin-right: 10px;
+        }
+        .btnVisualizacion:hover{
             background-color: rgb(124, 69, 153);
             color: white;
         }
@@ -668,7 +826,9 @@ $_SESSION["pedido"] = "biblioteca";
                 objetosPedidos: [],
                 buscador: "",
                 busquedaActiva: false,
-                perfil: null
+                perfil: null,
+                visualizacion: true,
+                popupAbiertoId: null
             },
             mounted () {
                 this.perfil = localStorage.getItem("perfil")
@@ -685,6 +845,13 @@ $_SESSION["pedido"] = "biblioteca";
                 }
             },
             methods:{
+                selectCategoria () {
+                    this.page= 1
+                    this.visualizacion ? this.getObjetos() : this.getListado()
+                },
+                togglePopup(id) {
+                    this.popupAbiertoId = this.popupAbiertoId === id ? null : id;
+                },
                 async cargarPagina() {
                     try {
                         // Realizar la consulta a la base de datos
@@ -694,6 +861,14 @@ $_SESSION["pedido"] = "biblioteca";
                     } catch (error) {
                         app.mostrarToast("Error", "Hubo un error al recuperar la información. Actualice la página");
                     }
+                },
+                mostrarBloques () {
+                    this.visualizacion = true
+                    this.cargarPagina()
+                },
+                mostrarListado () {
+                    this.visualizacion = false
+                    this.getListado()
                 },
                 verVideo(link) {
                     window.open(link, "_blank");
@@ -926,6 +1101,45 @@ $_SESSION["pedido"] = "biblioteca";
                         }
                     });
                 },
+                getListado() {
+                    this.buscandoObjetos = true;
+                    let formdata = new FormData();
+                    formdata.append("idCategoria", this.categoriaBusqueda);
+                    
+                    if (this.perfil == 'biblioteca') {
+                        formdata.append("tipo", "libro");
+                    } 
+                    if (this.perfil == 'recursos') {
+                        formdata.append("tipo", "recurso");
+                    }
+                    if (this.perfil == 'planificaciones') {
+                        formdata.append("tipo", "planificaciones");
+                    }
+                    if (this.perfil == 'videos') {
+                        formdata.append("tipo", "videos");
+                    }
+
+                    if (this.page == 1) {
+                        formdata.append("inicio", 0);
+                    } else {
+                        formdata.append("inicio", ((app.page -1) * 50));
+                    }
+                    this.consultarCantidad()
+
+                    return axios.post("funciones/acciones.php?accion=getListado", formdata)
+                    .then(function(response){   
+                        app.buscandoObjetos = false;
+                        if (response.data.error) {
+                            app.mostrarToast("Error", response.data.mensaje);
+                        } else {
+                            if (response.data.archivos != false) {
+                                app.objetos = response.data.archivos;
+                            } else {
+                                app.objetos = []
+                            }
+                        }
+                    });
+                },
                 /////
                 buscarObjeto() {
                     this.page = 1;
@@ -938,18 +1152,17 @@ $_SESSION["pedido"] = "biblioteca";
                     this.getObjetos();
                 },
                 prev() {
-                    if(this.page > 1) {
+                    if (this.page > 1) {
                         this.page = this.page - 1;
-                        this.getObjetos();
                     }
+                    this.visualizacion ? this.getObjetos() : this.getListado()
                 },
                 next() {
-                    if (Math.ceil(this.cantidadObjetos/6) > this.page) {
+                    if (Math.ceil(this.cantidadObjetos/50) > this.page) {
                         this.page = this.page + 1;
-                        this.getObjetos();
                     }
+                    this.visualizacion ? this.getObjetos() : this.getListado()
                 },
-             
                 dataURItoBlob (dataURI) {
                     const byteString = window.atob(dataURI)
                     const arrayBuffer = new ArrayBuffer(byteString.length)

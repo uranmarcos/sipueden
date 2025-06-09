@@ -7,13 +7,6 @@ class ApptivaDB {
     private $db = "pedidossipueden";
     public $conexion;
 
-
-    // private $host = "localhost";
-    // private $usuario = "sipueden";
-    // private $clave = "Pt1js803~";
-    // private $db = "sipueden";
-    // public $conexion;
-
     
     public function __construct(){
         $this->conexion = new mysqli($this->host, $this->usuario, $this->clave, $this->db)
@@ -59,6 +52,88 @@ class ApptivaDB {
                     }
                 }
             }
+            // return $resultado->fetch_all(MYSQLI_ASSOC);
+            $filas = array();
+            while ($fila = $resultado->fetch_assoc()) {
+                $filas[] = $fila;
+            }
+            return $filas;
+        } catch (\Throwable $th) {
+            return false;
+        }
+    }
+
+    public function getListado($tipo, $idCategoria, $inicio) {
+        try {
+
+            // if ($tipo == "planificaciones") {
+            //     if ($idCategoria == 0) {
+            //         // $resultado = $this->conexion->query("SELECT id, nombre, categoria, descripcion FROM $tabla WHERE tipo = 'planificaciones' ORDER BY nombre limit 5 offset $inicio") or die();
+            //         $resultado = $this->conexion->query("SELECT 
+            //             p.id,
+            //             p.nombre,
+            //             GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ') AS categoria,
+            //             p.descripcion
+            //             FROM $tabla p
+            //             JOIN categorias c 
+            //             ON FIND_IN_SET(c.id, REPLACE(REPLACE(p.categoria, '-', ','), ',,', '')) > 0
+            //             WHERE p.tipo = 'planificaciones'
+            //             GROUP BY p.id
+            //             ORDER BY p.nombre
+            //             LIMIT 5 OFFSET $inicio;") or die();
+            //     } else {
+            //         $condicion = '%-' . $idCategoria . '-%';
+            //         $resultado = $this->conexion->query("SELECT id, nombre, categoria, descripcion FROM $tabla WHERE tipo = 'planificaciones' AND categoria LIKE '$condicion' ORDER BY nombre limit 5 offset $inicio") or die();
+            //     }
+            // } 
+                if ($idCategoria == 0) {
+                    // $resultado = $this->conexion->query("SELECT id, nombre, categoria, descripcion FROM $tabla WHERE tipo = 'planificaciones' ORDER BY nombre limit 5 offset $inicio") or die();
+                    $resultado = $this->conexion->query("SELECT 
+                        r.id,
+                        r.nombre,
+                        GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ') AS categoria,
+                        r.descripcion
+                        FROM recursos r
+                        JOIN categorias c 
+                        ON FIND_IN_SET(c.id, REPLACE(REPLACE(r.categoria, '-', ','), ',,', '')) > 0
+                        WHERE r.tipo = '$tipo'
+                        GROUP BY r.id
+                        ORDER BY r.nombre
+                        LIMIT 50 OFFSET $inicio;") or die();
+                } else {
+                    $condicion = '%-' . $idCategoria . '-%';
+                    // $resultado = $this->conexion->query("SELECT id, nombre, categoria, descripcion FROM $tabla WHERE tipo = '$tipo' AND categoria LIKE '$condicion' ORDER BY nombre limit 5 offset $inicio") or die();
+                    $resultado = $this->conexion->query("SELECT 
+                        r.id,
+                        r.nombre,
+                        c.nombre AS categoria,
+                        r.descripcion
+                        FROM recursos r
+                        JOIN categorias c 
+                        ON c.id = $idCategoria
+                        WHERE r.tipo = '$tipo' 
+                        AND categoria LIKE '$condicion' 
+                        ORDER BY nombre limit 
+                        50 offset $inicio") or die();
+                }
+            // else {
+            //     if ($buscador != "") {
+            //         $busqueda = '%' . $buscador . '%';
+            //         if ($idCategoria == 0) {
+            //             $resultado = $this->conexion->query("SELECT * FROM $tabla WHERE tipo = '$tipo' AND nombre LIKE '$busqueda' ORDER BY nombre limit 6 offset $inicio") or die();
+            //         } else {
+            //             $condicion = '%-' . $idCategoria . '-%';
+            //             $resultado = $this->conexion->query("SELECT * FROM $tabla WHERE tipo = '$tipo' AND categoria LIKE '$condicion' AND nombre LIKE '$busqueda' ORDER BY nombre limit 6 offset $inicio") or die();
+            //         }
+            //     } else {
+            //         if ($idCategoria == 0) {
+            //             $resultado = $this->conexion->query("SELECT * FROM $tabla WHERE tipo = '$tipo' ORDER BY nombre limit 6 offset $inicio") or die();
+            //         } else {
+            //             $condicion = '%-' . $idCategoria . '-%';
+            //             $resultado = $this->conexion->query("SELECT * FROM $tabla WHERE tipo = '$tipo' AND categoria LIKE '$condicion' ORDER BY nombre limit 6 offset $inicio") or die();
+            //         }
+            //     }
+            // }
             // return $resultado->fetch_all(MYSQLI_ASSOC);
             $filas = array();
             while ($fila = $resultado->fetch_assoc()) {

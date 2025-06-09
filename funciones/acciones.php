@@ -54,6 +54,24 @@
 
         break;
 
+        case 'getListado':
+            $idCategoria = $_POST["idCategoria"];
+            $inicio = $_POST["inicio"];
+            $tipo = $_POST["tipo"];
+            
+            $u = $user -> getListado($tipo, $idCategoria, $inicio);
+
+            if ($u || $u == []) { 
+                $res["archivos"] = $u;
+                $res["mensaje"] = "Consulta exitosa";
+            } else {
+                $res["u"] = $u;
+                $res["mensaje"] = "Hubo un error al recuperar la información. Por favor recargue la página.";
+                $res["error"] = true;
+            } 
+
+        break;
+
         case 'verPlanificacion':
             $id = $_POST["idPlanificacion"];
             $condicion = "id = '". $id . "'";
