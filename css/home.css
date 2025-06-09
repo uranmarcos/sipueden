@@ -1,3 +1,6 @@
+.bordeInferior {
+    border-bottom: rgb(124, 69, 153) 1px solid;
+}
 .header{
     /* background-color:  rgb(124, 69, 153); */
     background-color: white;
@@ -6,7 +9,8 @@
     padding: 0 20px;
     justify-content: space-between;
     align-items: center;
-    border-bottom: rgb(124, 69, 153) 1px solid;
+    max-width: 960px !important;
+    margin:auto;
 }
 .imgHeader{
     border-radius: 50%;
